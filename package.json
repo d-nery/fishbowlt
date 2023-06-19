@@ -1,0 +1,28 @@
+{
+    "name": "slbot",
+    "version": "0.0.1",
+    "description": "Fishbowl Bot",
+    "main": "dist/main.js",
+    "scripts": {
+        "start": "ts-node src/main.ts",
+        "build": "tsc -p ."
+    },
+    "dependencies": {
+        "@colors/colors": "^1.5.0",
+        "@slack/bolt": "^3.13.1",
+        "@slack/web-api": "^6.8.1",
+        "@types/underscore": "^1.11.5",
+        "azure-devops-node-api": "^12.0.0",
+        "dotenv": "^16.1.4",
+        "moment": "^2.29.4",
+        "slack-block-builder": "^2.7.2",
+        "underscore": "^1.13.6",
+        "winston": "^3.9.0"
+    },
+    "license": "MIT",
+    "devDependencies": {
+        "@types/node": "^20.3.1",
+        "ts-node": "^10.9.1",
+        "typescript": "^5.1.3"
+    }
+}
