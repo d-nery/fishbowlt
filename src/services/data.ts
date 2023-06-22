@@ -62,6 +62,7 @@ const save = () => {
 const admins = process.env.FISHBOWL_ADMINS?.split(",") ?? [];
 const fishbowl_channel = process.env.FISHBOWL_CHANNEL ?? "";
 const fishbowl_meet = process.env.FISHBOWL_MEET ?? "";
+const fishbowl_pp = process.env.FISHBOWL_PP ?? "";
 
 const insert_subject = (subject: string, author: string) => {
     db.subjects.push({
@@ -154,6 +155,7 @@ export default {
     admins,
     fishbowl_channel,
     fishbowl_meet,
+    fishbowl_pp,
     insert_subject,
     choose_subject,
     delete_subject,

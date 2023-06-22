@@ -181,10 +181,10 @@ export const HomeTabEvent: IEvent = {
                     Message()
                         .channel(data.fishbowl_channel)
                         .text(
-                            `${Md.bold("O fishbowl vai começar!")}\nTema escolhido: ${Md.bold(subject.subject)}\nClique ${Md.link(
+                            `${Md.bold("Começando daqui a pouco!")}\nTema escolhido: ${Md.bold(subject.subject)}\nClique ${Md.link(
                                 data.fishbowl_meet,
                                 "aqui"
-                            )} para o meet.`
+                            )} para o meet e ${Md.link(data.fishbowl_pp, "aqui")} para a apresentação.`
                         )
                         .buildToObject()
                 );
