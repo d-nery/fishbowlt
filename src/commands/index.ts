@@ -7,6 +7,6 @@ export interface ICommand {
 }
 
 export interface IAction {
-    name: string;
+    name: string | RegExp;
     run: Middleware<SlackActionMiddlewareArgs<SlackAction>>;
 }

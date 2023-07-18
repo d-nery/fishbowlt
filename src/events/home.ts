@@ -1,11 +1,29 @@
-import { Blocks, HomeTab, Elements, omitIfFalsy, Bits, ViewBlockBuilder, user, Md, Message, Attachment, omitIfTruthy } from "slack-block-builder";
+import { Blocks, HomeTab, Elements, omitIfFalsy, Bits, ViewBlockBuilder, Md, Message, Attachment, omitIfTruthy } from "slack-block-builder";
 import { WebClient } from "@slack/web-api";
 import _ from "underscore";
 
 import { IEvent } from ".";
 import data from "../services/data";
 
-const get_home_blocks = (user: string) => {
+const get_page = <T>(data: T[], page: number, page_size: number, block_getter: (item: T) => ViewBlockBuilder[]): ViewBlockBuilder[] => {
+    if (page_size >= data.length) {
+        return data.flatMap(i => block_getter(i));
+    }
+
+
+    page = Math.min(page, Math.ceil(data.length / page_size));
+    const filtered = data.slice((page-1) * page_size, page * page_size);
+
+    return [
+        ...filtered.flatMap(i => block_getter(i)),
+        Blocks.Actions().elements(
+            omitIfTruthy(page == 1, Elements.Button().actionId("paginate-previous").value(`${page - 1}`).text("Anterior")),
+            omitIfTruthy(page * page_size >= data.length, Elements.Button().actionId("paginate-next").value(`${page + 1}`).text("Próximo")),
+        ),
+    ]
+}
+
+const get_home_blocks = (user: string, page: number) => {
     const is_admin = data.admins.includes(user);
     const subjects = is_admin ? _.sortBy(data.get_subjects(), (a) => -a.votes) : data.get_subjects();
     const show_votes = is_admin || data.show_votes();
@@ -13,7 +31,7 @@ const get_home_blocks = (user: string) => {
     return HomeTab()
         .blocks(
             Blocks.Header().text("Fishbowl! :fish:"),
-            subjects.flatMap((s) => {
+            get_page(subjects, page, 10, s => {
                 const showDelete = is_admin || s.author == user;
                 const voted = data.get_votes(user).includes(s.id);
                 const blocks: ViewBlockBuilder[] = [
@@ -59,7 +77,6 @@ const get_home_blocks = (user: string) => {
 
                 return blocks;
             }),
-
             Blocks.Input()
                 .dispatchAction(true)
                 .label("Envie um novo tema!")
@@ -89,6 +106,10 @@ const get_home_blocks = (user: string) => {
                         .value("toggle-show-votes")
                         .actionId("toggle-show-votes"),
                     Elements.Button()
+                        .text(`Mostrar ${data.show_articles() ? "temas comuns" : "artigos"}`)
+                        .value("toggle-show-articles")
+                        .actionId("toggle-show-articles"),
+                    Elements.Button()
                         .text("Resetar Votos")
                         .value("reset-votes")
                         .actionId("reset-votes")
@@ -107,10 +128,10 @@ const get_home_blocks = (user: string) => {
         .buildToObject();
 };
 
-const reload_home = async (client: WebClient, user: string) => {
+const reload_home = async (client: WebClient, user: string, page = 1) => {
     await client.views.publish({
         user_id: user,
-        view: get_home_blocks(user),
+        view: get_home_blocks(user, page),
     });
 };
 
@@ -137,7 +158,7 @@ export const HomeTabEvent: IEvent = {
 
                 // TODO: alert new theme
 
-                await reload_home(client, body.user.id);
+                await reload_home(client, body.user.id, 99);
             },
         },
         {
@@ -231,6 +252,20 @@ export const HomeTabEvent: IEvent = {
             },
         },
         {
+            name: "toggle-show-articles",
+            run: async ({ ack, action, client, body }) => {
+                await ack();
+
+                if (action.type !== "button") {
+                    return;
+                }
+
+                data.set_show_articles(!data.show_articles());
+
+                await reload_home(client, body.user.id);
+            },
+        },
+        {
             name: "switch-vote",
             run: async ({ ack, action, client, body }) => {
                 await ack();
@@ -250,6 +285,21 @@ export const HomeTabEvent: IEvent = {
                 }
 
                 await reload_home(client, user_id);
+            },
+        },
+        {
+            name: /paginate/,
+            run: async ({ ack, action, client, body }) => {
+                await ack();
+
+                if (action.type !== "button") {
+                    return;
+                }
+
+                const user_id = body.user.id;
+                const page = parseInt(action.value);
+
+                await reload_home(client, user_id, page);
             },
         },
     ],
