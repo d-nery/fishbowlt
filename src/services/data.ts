@@ -104,7 +104,7 @@ const delete_subject = (id: number) => {
 };
 
 const choose_subject = (id: number) => {
-    const subject = _.find(db.subjects, (s) => s.id == id);
+    const subject = _.find(db.subjects, (s) => s.id == id) ?? _.find(db.articles, (s) => s.id == id);
     delete_subject(id);
 
     if (subject != undefined) {
